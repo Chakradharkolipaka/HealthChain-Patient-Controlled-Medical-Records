@@ -1,0 +1,32 @@
+[
+  {
+    "id": 1,
+    "name": "Annual Blood Work",
+    "type": "lab-report",
+    "date": "2024-01-15",
+    "size": "2.3 MB",
+    "sharedWithProviders": true,
+    "sharedWithResearchers": false,
+    "uploadedAt": "2024-01-15T10:30:00Z"
+  },
+  {
+    "id": 2,
+    "name": "X-Ray Results",
+    "type": "imaging",
+    "date": "2024-01-10",
+    "size": "5.7 MB",
+    "sharedWithProviders": false,
+    "sharedWithResearchers": false,
+    "uploadedAt": "2024-01-10T14:20:00Z"
+  },
+  {
+    "id": 3,
+    "name": "Prescription History",
+    "type": "prescription",
+    "date": "2024-01-05",
+    "size": "1.1 MB",
+    "sharedWithProviders": true,
+    "sharedWithResearchers": true,
+    "uploadedAt": "2024-01-05T09:15:00Z"
+  }
+]

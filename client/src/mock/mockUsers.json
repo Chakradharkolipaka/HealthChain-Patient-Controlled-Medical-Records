@@ -1,0 +1,14 @@
+[
+  {
+    "id": 1,
+    "username": "patient123",
+    "password": "password123",
+    "joinedAt": "2024-01-01T00:00:00Z"
+  },
+  {
+    "id": 2,
+    "username": "testuser",
+    "password": "testpass",
+    "joinedAt": "2024-01-02T00:00:00Z"
+  }
+]

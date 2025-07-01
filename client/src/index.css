@@ -1,0 +1,106 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(218, 11%, 13%);
+  --muted: hsl(220, 14%, 96%);
+  --muted-foreground: hsl(220, 9%, 46%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(218, 11%, 13%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(218, 11%, 13%);
+  --border: hsl(220, 13%, 91%);
+  --input: hsl(220, 13%, 91%);
+  --primary: hsl(207, 100%, 40%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(142, 76%, 36%);
+  --secondary-foreground: hsl(0, 0%, 100%);
+  --accent: hsl(16, 100%, 60%);
+  --accent-foreground: hsl(0, 0%, 100%);
+  --destructive: hsl(0, 84%, 60%);
+  --destructive-foreground: hsl(60, 9%, 98%);
+  --ring: hsl(218, 11%, 13%);
+  --radius: 0.5rem;
+  
+  /* Medical theme colors */
+  --medical-50: hsl(207, 100%, 97%);
+  --medical-100: hsl(207, 100%, 94%);
+  --medical-500: hsl(207, 100%, 40%);
+  --medical-600: hsl(207, 100%, 32%);
+  --medical-700: hsl(207, 100%, 24%);
+}
+
+.dark {
+  --background: hsl(224, 71%, 4%);
+  --foreground: hsl(213, 31%, 91%);
+  --muted: hsl(223, 47%, 11%);
+  --muted-foreground: hsl(215, 14%, 51%);
+  --popover: hsl(224, 71%, 4%);
+  --popover-foreground: hsl(213, 31%, 91%);
+  --card: hsl(224, 71%, 4%);
+  --card-foreground: hsl(213, 31%, 91%);
+  --border: hsl(216, 34%, 17%);
+  --input: hsl(216, 34%, 17%);
+  --primary: hsl(207, 100%, 40%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(142, 76%, 36%);
+  --secondary-foreground: hsl(0, 0%, 100%);
+  --accent: hsl(16, 100%, 60%);
+  --accent-foreground: hsl(0, 0%, 100%);
+  --destructive: hsl(0, 63%, 31%);
+  --destructive-foreground: hsl(210, 40%, 98%);
+  --ring: hsl(216, 34%, 17%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}
+
+/* Custom medical theme utilities */
+.bg-medical-gradient {
+  background: linear-gradient(135deg, hsl(207, 100%, 97%) 0%, hsl(142, 76%, 97%) 100%);
+}
+
+.text-medical-primary {
+  color: hsl(207, 100%, 40%);
+}
+
+.text-medical-secondary {
+  color: hsl(142, 76%, 36%);
+}
+
+.text-medical-accent {
+  color: hsl(16, 100%, 60%);
+}
+
+.bg-medical-primary {
+  background-color: hsl(207, 100%, 40%);
+}
+
+.bg-medical-secondary {
+  background-color: hsl(142, 76%, 36%);
+}
+
+.bg-medical-accent {
+  background-color: hsl(16, 100%, 60%);
+}
+
+.hover\:bg-medical-primary:hover {
+  background-color: hsl(207, 100%, 35%);
+}
+
+.hover\:bg-medical-secondary:hover {
+  background-color: hsl(142, 76%, 31%);
+}
+
+.hover\:bg-medical-accent:hover {
+  background-color: hsl(16, 100%, 55%);
+}
