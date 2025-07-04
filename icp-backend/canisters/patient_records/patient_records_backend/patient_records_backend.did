@@ -1,0 +1,15 @@
+type RecordId = nat64;
+
+type MedicalRecord = record {
+  id: RecordId;
+  owner: text;
+  name: text;
+  data: text;
+  uploaded_at: text;
+};
+
+service : {
+  add_record: (text, text, text) -> (RecordId);
+  get_my_records: () -> (vec MedicalRecord) query;
+  get_record_by_id: (RecordId) -> (opt MedicalRecord) query;
+}

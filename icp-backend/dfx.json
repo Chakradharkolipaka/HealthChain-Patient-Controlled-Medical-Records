@@ -1,0 +1,44 @@
+{
+  "canisters": {
+    "access_control_backend": {
+      "candid": "canisters/access_control/access_control_backend/access_control_backend.did",
+      "package": "access_control_backend",
+      "type": "rust",
+      "build": "cd canisters/access_control/access_control_backend && cargo build --target wasm32-unknown-unknown --release"
+
+    },
+    "access_control_frontend": {
+      "dependencies": [
+        "access_control_backend"
+      ],
+      "source": [
+        "canisters/access_control/access_control_frontend/dist"
+      ],
+      "type": "assets",
+      "workspace": "access_control_frontend"
+    },
+  
+    "patient_records_backend": {
+      "candid": "canisters/patient_records/patient_records_backend/patient_records_backend.did",
+      "package": "patient_records_backend",
+      "type": "rust",
+      "build": "cd canisters/patient_records/patient_records_backend && cargo build --target wasm32-unknown-unknown --release"
+
+    },
+    "patient_records_frontend": {
+      "dependencies": [
+        "patient_records_backend"
+      ],
+      "source": [
+        "canisters/patient_records/patient_records_frontend/dist"
+      ],
+      "type": "assets",
+      "workspace": "patient_records_frontend"
+    }
+  },
+  "defaults": {
+    
+  },
+  "output_env_file": ".env",
+  "version": 1
+}

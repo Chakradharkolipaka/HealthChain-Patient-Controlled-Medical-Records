@@ -4,3 +4,13 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+
+# ICP Backend build artifacts
+icp-backend/.dfx/
+icp-backend/target/
+icp-backend/.env
+icp-backend/Cargo.lock
+
+# Frontend dist directories (these are generated)
+icp-backend/canisters/*/dist/
+icp-backend/src/declarations/

@@ -1,0 +1,6 @@
+[workspace]
+resolver = "2"
+members = [
+    "canisters/access_control/access_control_backend",
+    "canisters/patient_records/patient_records_backend"
+]

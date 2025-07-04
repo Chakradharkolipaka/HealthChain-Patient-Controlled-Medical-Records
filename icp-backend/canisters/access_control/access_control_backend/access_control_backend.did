@@ -1,0 +1,8 @@
+type RecordId = nat64;
+
+service : {
+  grant_access: (RecordId, text) -> ();
+  revoke_access: (RecordId, text) -> ();
+  has_access: (RecordId, text) -> (bool) query;
+  get_grantees: (RecordId) -> (vec text) query;
+}
