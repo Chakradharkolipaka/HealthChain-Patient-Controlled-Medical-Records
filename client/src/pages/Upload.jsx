@@ -3,14 +3,19 @@ import { useLocation } from "wouter";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import UploadForm from "@/components/UploadForm";
-import { useAuth } from "@/lib/auth";
+import { useAuth } from "@/lib/icpAuth";
 import { useToast } from "@/hooks/use-toast";
+import { createAuthenticatedAPI } from "@/services/authenticatedApi";
+import { testAddRecord } from "@/services/testApi";
 
 export default function Upload() {
   const [, setLocation] = useLocation();
-  const { user } = useAuth();
+  const { user, agent, identity } = useAuth();
   const { toast } = useToast();
   const [isUploading, setIsUploading] = useState(false);
+
+  // Create authenticated API instance
+  const api = agent ? createAuthenticatedAPI(agent) : null;
 
   useEffect(() => {
     if (!user) {
@@ -19,49 +24,61 @@ export default function Upload() {
   }, [user, setLocation]);
 
   const handleUpload = async (uploadData) => {
+    if (!identity) {
+      toast({
+        title: "Error",
+        description: "Please authenticate first",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsUploading(true);
     
     try {
-      // TODO: Send record + metadata to ICP canister for secure storage
-      
-      // Mock upload process
       toast({
         title: "Uploading record...",
         description: "Please wait while we securely store your medical record.",
       });
       
-      // Simulate upload delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Get existing records from localStorage
-      const existingRecords = JSON.parse(localStorage.getItem('healthchain_records') || '[]');
-      
-      // Create new record
-      const newRecord = {
-        id: Date.now(),
+      // Prepare record data for ICP backend
+      const recordData = {
         name: uploadData.name,
         type: uploadData.type,
         date: uploadData.date,
         size: (uploadData.file.size / (1024 * 1024)).toFixed(1) + ' MB',
-        notes: uploadData.notes,
-        sharedWithProviders: false,
-        sharedWithResearchers: false,
+        data: JSON.stringify({
+          fileName: uploadData.file.name,
+          // In production, you would upload the file to IPFS or similar
+          // and store the hash here instead of the full file
+        }),
+        notes: uploadData.notes || '',
         uploadedAt: new Date().toISOString()
       };
       
-      // Add to records
-      const updatedRecords = [...existingRecords, newRecord];
-      localStorage.setItem('healthchain_records', JSON.stringify(updatedRecords));
+      // Send record to ICP canister using test API
+      const result = await testAddRecord(
+        identity,
+        recordData.name,
+        recordData.type,
+        recordData.date,
+        recordData.size,
+        recordData.data,
+        recordData.notes,
+        recordData.uploadedAt
+      );
       
-      toast({
-        title: "Record uploaded successfully!",
-        description: "Your medical record has been securely stored on the blockchain.",
-      });
-      
-      // Redirect to dashboard after successful upload
-      setTimeout(() => {
+      if (result.success) {
+        toast({
+          title: "Success!",
+          description: "Your medical record has been securely uploaded and stored.",
+        });
+        
+        // Redirect to dashboard
         setLocation("/dashboard");
-      }, 1500);
+      } else {
+        throw new Error(result.error || 'Failed to upload record');
+      }
       
     } catch (error) {
       toast({

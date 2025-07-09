@@ -18,7 +18,7 @@ import {
   Calendar,
   User
 } from "lucide-react";
-import { useAuth } from "@/lib/auth";
+import { useAuth } from "@/lib/icpAuth";
 import { useToast } from "@/hooks/use-toast";
 import mockSharedData from "@/mock/mockSharedToMe.json";
 

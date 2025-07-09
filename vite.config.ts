@@ -34,4 +34,11 @@ export default defineConfig({
       deny: ["**/.*"],
     },
   },
+  define: {
+    global: 'globalThis',
+    'process.env': process.env,
+  },
+  optimizeDeps: {
+    include: ['@dfinity/agent', '@dfinity/candid', '@dfinity/principal', 'buffer', 'events'],
+  },
 });

@@ -4,12 +4,16 @@ type MedicalRecord = record {
   id: RecordId;
   owner: text;
   name: text;
+  record_type: text;
+  date: text;
+  size: text;
   data: text;
+  notes: text;
   uploaded_at: text;
 };
 
 service : {
-  add_record: (text, text, text) -> (RecordId);
+  add_record: (text, text, text, text, text, text, text) -> (RecordId);
   get_my_records: () -> (vec MedicalRecord) query;
   get_record_by_id: (RecordId) -> (opt MedicalRecord) query;
 }

@@ -4,8 +4,9 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import AccessToggle from "@/components/AccessToggle";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAuth } from "@/lib/auth";
+import { useAuth } from "@/lib/icpAuth";
 import { useToast } from "@/hooks/use-toast";
+import { createAuthenticatedAPI } from "@/services/authenticatedApi";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,10 +20,41 @@ import {
 
 export default function AccessControl() {
   const [, setLocation] = useLocation();
-  const { user } = useAuth();
+  const { user, agent } = useAuth();
   const { toast } = useToast();
   const [records, setRecords] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [confirmDialog, setConfirmDialog] = useState({ open: false, title: '', message: '', onConfirm: null });
+
+  // Create authenticated API instance
+  const api = agent ? createAuthenticatedAPI(agent) : null;
+
+  // Fetch records from ICP backend
+  const fetchRecords = async () => {
+    if (!api) return;
+    
+    setLoading(true);
+    try {
+      const result = await api.patientRecords.getMyRecords();
+      if (result.success) {
+        setRecords(result.records);
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to fetch records: " + result.error,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching records:', error);
+      toast({
+        title: "Error",
+        description: "Failed to connect to backend",
+        variant: "destructive",
+      });
+    }
+    setLoading(false);
+  };
 
   useEffect(() => {
     if (!user) {
@@ -30,10 +62,11 @@ export default function AccessControl() {
       return;
     }
 
-    // Load records from localStorage
-    const savedRecords = JSON.parse(localStorage.getItem('healthchain_records') || '[]');
-    setRecords(savedRecords);
-  }, [user, setLocation]);
+    // Fetch records from ICP backend
+    if (agent) {
+      fetchRecords();
+    }
+  }, [user, agent, setLocation]);
 
   const showConfirmation = (title, message, onConfirm) => {
     setConfirmDialog({ open: true, title, message, onConfirm });
@@ -43,24 +76,65 @@ export default function AccessControl() {
     setConfirmDialog({ open: false, title: '', message: '', onConfirm: null });
   };
 
-  const handleToggleProvider = (recordId) => {
-    const record = records.find(r => r.id === recordId);
-    if (!record) return;
+  const handleToggleProvider = async (recordId) => {
+    if (!api) return;
 
-    if (record.sharedWithProviders) {
-      // Revoking access
-      showConfirmation(
-        'Revoke Provider Access',
-        'Are you sure you want to revoke healthcare provider access to this record? They will no longer be able to view or download it.',
-        () => updateRecordAccess(recordId, 'sharedWithProviders', false, 'Provider access revoked')
-      );
-    } else {
-      // Granting access
-      showConfirmation(
-        'Grant Provider Access',
-        'Are you sure you want to grant healthcare providers access to this record? They will be able to view and download the record.',
-        () => updateRecordAccess(recordId, 'sharedWithProviders', true, 'Provider access granted')
-      );
+    // For simplicity, we'll check if access is already granted by looking at grantees
+    try {
+      const granteesResult = await api.accessControl.getGrantees(recordId);
+      const providerPrincipal = "healthcare-provider-principal";
+      const hasProviderAccess = granteesResult.success && granteesResult.grantees.includes(providerPrincipal);
+
+      if (hasProviderAccess) {
+        // Revoking access
+        showConfirmation(
+          'Revoke Provider Access',
+          'Are you sure you want to revoke healthcare provider access to this record? They will no longer be able to view or download it.',
+          async () => {
+            const result = await api.accessControl.revokeAccess(recordId, providerPrincipal);
+            if (result.success) {
+              toast({
+                title: "Access revoked",
+                description: "Healthcare provider access has been revoked.",
+              });
+            } else {
+              toast({
+                title: "Error",
+                description: "Failed to revoke access: " + result.error,
+                variant: "destructive",
+              });
+            }
+          }
+        );
+      } else {
+        // Granting access
+        showConfirmation(
+          'Grant Provider Access',
+          'Are you sure you want to grant healthcare providers access to this record? They will be able to view and download the record.',
+          async () => {
+            const result = await api.accessControl.grantAccess(recordId, providerPrincipal);
+            if (result.success) {
+              toast({
+                title: "Access granted",
+                description: "Healthcare provider access has been granted.",
+              });
+            } else {
+              toast({
+                title: "Error",
+                description: "Failed to grant access: " + result.error,
+                variant: "destructive",
+              });
+            }
+          }
+        );
+      }
+    } catch (error) {
+      console.error('Error checking access:', error);
+      toast({
+        title: "Error",
+        description: "Failed to check access status",
+        variant: "destructive",
+      });
     }
   };
 

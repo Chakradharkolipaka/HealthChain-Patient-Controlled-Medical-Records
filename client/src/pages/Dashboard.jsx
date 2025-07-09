@@ -11,8 +11,10 @@ import { useLocation } from "wouter";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import RecordCard from "@/components/RecordCard";
-import { useAuth } from "@/lib/auth";
+import { useAuth } from "@/lib/icpAuth";
 import { useToast } from "@/hooks/use-toast";
+import { createAuthenticatedAPI } from "@/services/authenticatedApi";
+import { testCanisterConnection, testUnauthenticatedConnection } from "@/services/testApi";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,10 +28,68 @@ import {
 
 export default function Dashboard() {
   const [, setLocation] = useLocation();
-  const { user } = useAuth();
+  const { user, agent, identity } = useAuth();
   const { toast } = useToast();
   const [records, setRecords] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [confirmDialog, setConfirmDialog] = useState({ open: false, title: '', message: '', onConfirm: null });
+
+  // Create authenticated API instance
+  const api = agent ? createAuthenticatedAPI(agent) : null;
+
+  // Fetch records from ICP backend
+  const fetchRecords = async () => {
+    setLoading(true);
+    try {
+      // First try unauthenticated test to check if canisters are accessible
+      console.log('Testing unauthenticated connection...');
+      const unauthTest = await testUnauthenticatedConnection();
+      console.log('Unauthenticated test result:', unauthTest);
+      
+      if (!unauthTest.success && unauthTest.error.includes('certificate')) {
+        toast({
+          title: "Connection Error",
+          description: "Certificate verification failed. Check dfx local network.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+      
+      // If unauthenticated test passes, try authenticated
+      if (!identity) {
+        console.log('No identity available');
+        setLoading(false);
+        return;
+      }
+      
+      // Use test API to debug connection issues
+      const result = await testCanisterConnection(identity);
+      if (result.success) {
+        // Transform records to match UI expectations
+        const transformedRecords = result.records.map(record => ({
+          ...record,
+          id: Number(record.id),
+          type: record.record_type
+        }));
+        setRecords(transformedRecords);
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to fetch records: " + result.error,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching records:', error);
+      toast({
+        title: "Error",
+        description: "Failed to connect to backend",
+        variant: "destructive",
+      });
+    }
+    setLoading(false);
+  };
 
   useEffect(() => {
     if (!user) {
@@ -37,13 +97,11 @@ export default function Dashboard() {
       return;
     }
 
-    // TODO: Fetch records from backend canister tied to authenticated user identity
-    // For now, load from localStorage or use mock data
-    const savedRecords = localStorage.getItem('healthchain_records');
-    if (savedRecords) {
-      setRecords(JSON.parse(savedRecords));
+    // Fetch records from ICP backend
+    if (user) {
+      fetchRecords();
     }
-  }, [user, setLocation]);
+  }, [user, agent, setLocation]);
 
   const showConfirmation = (title, message, onConfirm) => {
     setConfirmDialog({ open: true, title, message, onConfirm });
@@ -53,46 +111,78 @@ export default function Dashboard() {
     setConfirmDialog({ open: false, title: '', message: '', onConfirm: null });
   };
 
-  const handleShareProvider = (recordId) => {
+  const handleShareProvider = async (recordId) => {
+    if (!api) return;
+    
     showConfirmation(
       'Share with Healthcare Provider',
       'Are you sure you want to share this medical record with healthcare providers? They will have access to view and download the record.',
-      () => {
-        // TODO: Connect with access control logic in backend canister (grant by Principal ID)
-        const updatedRecords = records.map(record => 
-          record.id === recordId 
-            ? { ...record, sharedWithProviders: true }
-            : record
-        );
-        setRecords(updatedRecords);
-        localStorage.setItem('healthchain_records', JSON.stringify(updatedRecords));
-        
-        toast({
-          title: "Record shared",
-          description: "Record shared with healthcare providers.",
-        });
+      async () => {
+        try {
+          // Use a placeholder principal for healthcare providers
+          const providerPrincipal = "healthcare-provider-principal";
+          const result = await api.accessControl.grantAccess(recordId, providerPrincipal);
+          
+          if (result.success) {
+            toast({
+              title: "Record shared",
+              description: "Record shared with healthcare providers.",
+            });
+            // Refresh records to show updated sharing status
+            fetchRecords();
+          } else {
+            toast({
+              title: "Error",
+              description: "Failed to share record: " + result.error,
+              variant: "destructive",
+            });
+          }
+        } catch (error) {
+          console.error('Error sharing record:', error);
+          toast({
+            title: "Error",
+            description: "Failed to share record",
+            variant: "destructive",
+          });
+        }
       }
     );
   };
 
-  const handleShareResearcher = (recordId) => {
+  const handleShareResearcher = async (recordId) => {
+    if (!api) return;
+    
     showConfirmation(
       'Share with Medical Researchers',
       'Are you sure you want to share this medical record with medical researchers? Your data will be anonymized and used for research purposes only.',
-      () => {
-        // TODO: Connect with access control logic in backend canister (grant by Principal ID)
-        const updatedRecords = records.map(record => 
-          record.id === recordId 
-            ? { ...record, sharedWithResearchers: true }
-            : record
-        );
-        setRecords(updatedRecords);
-        localStorage.setItem('healthchain_records', JSON.stringify(updatedRecords));
-        
-        toast({
-          title: "Record shared",
-          description: "Record shared with medical researchers.",
-        });
+      async () => {
+        try {
+          // Use a placeholder principal for researchers
+          const researcherPrincipal = "medical-researcher-principal";
+          const result = await api.accessControl.grantAccess(recordId, researcherPrincipal);
+          
+          if (result.success) {
+            toast({
+              title: "Record shared",
+              description: "Record shared with medical researchers.",
+            });
+            // Refresh records to show updated sharing status
+            fetchRecords();
+          } else {
+            toast({
+              title: "Error",
+              description: "Failed to share record: " + result.error,
+              variant: "destructive",
+            });
+          }
+        } catch (error) {
+          console.error('Error sharing record:', error);
+          toast({
+            title: "Error",
+            description: "Failed to share record",
+            variant: "destructive",
+          });
+        }
       }
     );
   };
@@ -170,7 +260,12 @@ export default function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {records.length === 0 ? (
+              {loading ? (
+                <div className="text-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-medical-primary mx-auto mb-4"></div>
+                  <p className="text-lg text-slate-500">Loading your records...</p>
+                </div>
+              ) : records.length === 0 ? (
                 <div className="text-center py-12">
                   <FolderOpen className="h-16 w-16 text-slate-400 mx-auto mb-4" />
                   <p className="text-lg text-slate-500 mb-4">No medical records uploaded yet</p>

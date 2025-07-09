@@ -9,8 +9,12 @@ pub struct MedicalRecord {
     pub id: RecordId,
     pub owner: Principal,
     pub name: String,
-    pub data: String, // In production, use encrypted data!
-    pub uploaded_at: String,
+    pub record_type: String, // prescription, lab-report, imaging, consultation, vaccination, other
+    pub date: String, // Date of the medical event
+    pub size: String, // File size (e.g., "2.5 MB")
+    pub data: String, // In production, use encrypted data or IPFS hash
+    pub notes: String, // Additional notes
+    pub uploaded_at: String, // When it was uploaded
 }
 
 thread_local! {
@@ -19,7 +23,7 @@ thread_local! {
 }
 
 #[ic_cdk::update]
-fn add_record(name: String, data: String, uploaded_at: String) -> RecordId {
+fn add_record(name: String, record_type: String, date: String, size: String, data: String, notes: String, uploaded_at: String) -> RecordId {
     let owner = caller().to_text();
     let id = NEXT_ID.with(|next| {
         let mut n = next.borrow_mut();
@@ -27,7 +31,17 @@ fn add_record(name: String, data: String, uploaded_at: String) -> RecordId {
         *n += 1;
         id
     });
-    let record = MedicalRecord { id, owner, name, data, uploaded_at };
+    let record = MedicalRecord { 
+        id, 
+        owner, 
+        name, 
+        record_type, 
+        date, 
+        size, 
+        data, 
+        notes, 
+        uploaded_at 
+    };
     RECORDS.with(|records| records.borrow_mut().insert(id, record));
     id
 }
